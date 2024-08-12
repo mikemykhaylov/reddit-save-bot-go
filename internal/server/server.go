@@ -54,7 +54,10 @@ func botHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewServer(config *config.ServerConfig) error {
-	telegramAPI = api.NewTelegramAPI(viper.GetString("token"))
+	telegramAPI = api.NewTelegramAPI(
+		viper.GetString("token"),
+		&http.Client{},
+	)
 
 	r := mux.NewRouter()
 

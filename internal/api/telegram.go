@@ -7,12 +7,16 @@ import (
 	"net/url"
 )
 
-type TelegramAPI struct {
-	baseURL    string
-	httpClient *http.Client
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewTelegramAPI(token string) *TelegramAPI {
+type TelegramAPI struct {
+	baseURL    string
+	httpClient HTTPClient
+}
+
+func NewTelegramAPI(token string, httpClient HTTPClient) *TelegramAPI {
 	return &TelegramAPI{
 		baseURL:    "https://api.telegram.org/bot" + token,
 		httpClient: &http.Client{},
