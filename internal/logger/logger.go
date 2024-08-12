@@ -14,7 +14,20 @@ type (
 var logKey ContextKey = "logger"
 
 func NewLogger() *slog.Logger {
-	return slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	opts := &slog.HandlerOptions{
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == "level" {
+				return slog.Attr{
+					Key:   "severity",
+					Value: a.Value,
+				}
+			}
+
+			return a
+		},
+	}
+
+	return slog.New(slog.NewJSONHandler(os.Stdout, opts))
 }
 
 func WithLogging(next http.HandlerFunc) http.HandlerFunc {
