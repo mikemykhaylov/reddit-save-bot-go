@@ -24,6 +24,7 @@ func (t *TelegramAPI) SendMessage(ctx context.Context, chatID int64, text string
 	query := methodURL.Query()
 	query.Set("chat_id", fmt.Sprintf("%d", chatID))
 	query.Set("text", text)
+	methodURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequest(http.MethodGet, methodURL.String(), nil)
 	if err != nil {
