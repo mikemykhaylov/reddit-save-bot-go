@@ -35,7 +35,6 @@ var (
 
 func init() {
 	serveCmd.Flags().Uint16P("port", "p", 8080, "Port to listen on")
-	// check ENV variable with viper
 	if err := viper.BindPFlag("port", serveCmd.Flags().Lookup("port")); err != nil {
 		panic(err)
 	}
