@@ -47,7 +47,7 @@ func NewServer(config *config.ServerConfig) error {
 	botHandleFunc := logger.WithLogging(botHandle)
 	r.HandleFunc("/", botHandleFunc).Methods(http.MethodPost)
 
-	address := fmt.Sprintf("localhost:%d", config.Port)
+	address := fmt.Sprintf("0.0.0.0:%d", config.Port)
 
 	return http.ListenAndServe(address, r)
 }
