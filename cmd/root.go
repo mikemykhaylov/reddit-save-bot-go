@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/mikemykhaylov/reddit-save-bot-go/internal/config"
+	"github.com/mikemykhaylov/reddit-save-bot-go/internal/logger"
 	"github.com/mikemykhaylov/reddit-save-bot-go/internal/server"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -19,6 +22,8 @@ var (
 		RunE: func(cmd *cobra.Command, args []string) error {
 			port := viper.GetUint16("port")
 
+			logger.FromContext(context.Background()).Info("Starting server", "port", port)
+
 			config := &config.ServerConfig{
 				Port: port,
 			}
@@ -34,10 +39,10 @@ func init() {
 	if err := viper.BindPFlag("port", serveCmd.Flags().Lookup("port")); err != nil {
 		panic(err)
 	}
-	viper.SetDefault("port", 8080)
 	if err := viper.BindEnv("port", "PORT"); err != nil {
 		panic(err)
 	}
+	viper.SetDefault("port", 8080)
 
 	rootCmd.AddCommand(serveCmd)
 }
