@@ -3,11 +3,10 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/PaulSonOfLars/gotgbot/v2"
 	"net/http"
 
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/gorilla/mux"
-
 	"github.com/mikemykhaylov/reddit-save-bot-go/internal/config"
 	"github.com/mikemykhaylov/reddit-save-bot-go/internal/logger"
 )
