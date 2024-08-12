@@ -11,20 +11,28 @@ type (
 	ContextKey string
 )
 
-var logKey ContextKey = "logger"
+var (
+	logKey         ContextKey = "logger"
+	gcpSlogMapping            = map[string]string{
+		"level": "severity",
+		"msg":   "message",
+	}
+)
+
+func isGCP() bool {
+	return os.Getenv("K_SERVICE") != ""
+}
 
 func NewLogger() *slog.Logger {
-	opts := &slog.HandlerOptions{
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			if a.Key == "level" {
-				return slog.Attr{
-					Key:   "severity",
-					Value: a.Value,
-				}
-			}
+	opts := &slog.HandlerOptions{}
 
+	if isGCP() {
+		opts.ReplaceAttr = func(groups []string, a slog.Attr) slog.Attr {
+			if v, ok := gcpSlogMapping[a.Key]; ok {
+				return slog.Attr{Key: v, Value: a.Value}
+			}
 			return a
-		},
+		}
 	}
 
 	return slog.New(slog.NewJSONHandler(os.Stdout, opts))
