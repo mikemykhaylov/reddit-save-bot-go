@@ -41,10 +41,10 @@ func NewServer(config *config.ServerConfig) error {
 	r := mux.NewRouter()
 
 	helloHandleFunc := logger.WithLogging(helloHandle)
-	r.HandleFunc("/hello", helloHandleFunc)
+	r.HandleFunc("/", helloHandleFunc)
 
 	botHandleFunc := logger.WithLogging(botHandle)
-	r.HandleFunc("/", botHandleFunc).Methods(http.MethodPost)
+	r.HandleFunc("/webhook", botHandleFunc).Methods(http.MethodPost)
 
 	address := fmt.Sprintf("0.0.0.0:%d", config.Port)
 
