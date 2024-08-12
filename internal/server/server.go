@@ -42,7 +42,12 @@ func botHandle(w http.ResponseWriter, r *http.Request) {
 	// send a message back
 	personalID := viper.GetInt64("personalID")
 
-	telegramAPI.SendMessage(ctx, personalID, "Hello, Go!")
+	err = telegramAPI.SendMessage(ctx, personalID, "Hello, Go!")
+	if err != nil {
+		logger.FromContext(ctx).Error("Failed to send message", "cause", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	// return 200
 	w.WriteHeader(http.StatusOK)
