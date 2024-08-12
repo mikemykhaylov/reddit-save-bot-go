@@ -40,7 +40,7 @@ func botHandle(w http.ResponseWriter, r *http.Request) {
 	logger.FromContext(ctx).Info("Received message", "sender", update.Message.From.Id)
 
 	// send a message back
-	personalID := viper.Get("personalID").(int64)
+	personalID := viper.GetInt64("personalID")
 
 	telegramAPI.SendMessage(ctx, personalID, "Hello, Go!")
 
@@ -49,6 +49,8 @@ func botHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewServer(config *config.ServerConfig) error {
+	telegramAPI = api.NewTelegramAPI(viper.GetString("token"))
+
 	r := mux.NewRouter()
 
 	helloHandleFunc := logger.WithLogging(helloHandle)
@@ -60,12 +62,4 @@ func NewServer(config *config.ServerConfig) error {
 	address := fmt.Sprintf("0.0.0.0:%d", config.Port)
 
 	return http.ListenAndServe(address, r)
-}
-
-func init() {
-	token := viper.Get("token").(string)
-	if token == "" {
-		panic("token is required")
-	}
-	telegramAPI = api.NewTelegramAPI(token)
 }

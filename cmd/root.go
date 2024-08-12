@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 
 	"github.com/mikemykhaylov/reddit-save-bot-go/internal/config"
 	"github.com/mikemykhaylov/reddit-save-bot-go/internal/logger"
@@ -23,6 +24,17 @@ var (
 			port := viper.GetUint16("port")
 
 			logger.FromContext(context.Background()).Info("Starting server", "port", port)
+
+			token := viper.GetString("token")
+			if token == "" {
+				logger.FromContext(context.Background()).Error("Telegram bot token is required")
+				return errors.New("telegram bot token is required")
+			}
+
+			personalID := viper.GetString("personalID")
+			if personalID == "" {
+				logger.FromContext(context.Background()).Warn("Telegram personal ID is not set, bot in public mode")
+			}
 
 			config := &config.ServerConfig{
 				Port: port,
