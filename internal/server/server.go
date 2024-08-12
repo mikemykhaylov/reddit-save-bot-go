@@ -7,8 +7,14 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/gorilla/mux"
+	"github.com/mikemykhaylov/reddit-save-bot-go/internal/api"
 	"github.com/mikemykhaylov/reddit-save-bot-go/internal/config"
 	"github.com/mikemykhaylov/reddit-save-bot-go/internal/logger"
+	"github.com/spf13/viper"
+)
+
+var (
+	telegramAPI *api.TelegramAPI
 )
 
 func helloHandle(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +39,11 @@ func botHandle(w http.ResponseWriter, r *http.Request) {
 	// print the sender id
 	logger.FromContext(ctx).Info("Received message", "sender", update.Message.From.Id)
 
+	// send a message back
+	personalID := viper.Get("personalID").(int64)
+
+	telegramAPI.SendMessage(ctx, personalID, "Hello, Go!")
+
 	// return 200
 	w.WriteHeader(http.StatusOK)
 }
@@ -49,4 +60,12 @@ func NewServer(config *config.ServerConfig) error {
 	address := fmt.Sprintf("0.0.0.0:%d", config.Port)
 
 	return http.ListenAndServe(address, r)
+}
+
+func init() {
+	token := viper.Get("token").(string)
+	if token == "" {
+		panic("token is required")
+	}
+	telegramAPI = api.NewTelegramAPI(token)
 }
