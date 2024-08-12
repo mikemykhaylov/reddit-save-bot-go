@@ -41,8 +41,15 @@ func NewLogger() *slog.Logger {
 func WithLogging(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger := NewLogger()
+		logger = logger.With("method", r.Method, "path", r.URL.Path)
+
+		if isGCP() {
+			logger = logger.With("logging.googleapis.com/trace", r.Header.Get("Traceparent"))
+		}
+
 		ctx := context.WithValue(r.Context(), logKey, logger)
 		r = r.WithContext(ctx)
+
 		next(w, r)
 	}
 }
