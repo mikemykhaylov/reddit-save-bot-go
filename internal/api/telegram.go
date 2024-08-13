@@ -35,9 +35,13 @@ func (t *TelegramAPI) SendMessage(ctx context.Context, chatID int64, text string
 		return err
 	}
 
-	_, err = t.httpClient.Do(req)
+	res, err := t.httpClient.Do(req)
 	if err != nil {
 		return err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
 
 	return nil
