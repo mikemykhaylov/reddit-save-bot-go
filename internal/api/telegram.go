@@ -24,13 +24,13 @@ func NewTelegramAPI(token string, httpClient HTTPClient) *TelegramAPI {
 }
 
 func (t *TelegramAPI) SendMessage(ctx context.Context, chatID int64, text string) error {
-	methodURL, _ := url.Parse(fmt.Sprintf("%s/sendMessage", t.baseURL))
-	query := methodURL.Query()
+	requestURL, _ := url.Parse(fmt.Sprintf("%s/sendMessage", t.baseURL))
+	query := requestURL.Query()
 	query.Set("chat_id", fmt.Sprintf("%d", chatID))
 	query.Set("text", text)
-	methodURL.RawQuery = query.Encode()
+	requestURL.RawQuery = query.Encode()
 
-	req, err := http.NewRequest(http.MethodGet, methodURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, requestURL.String(), nil)
 	if err != nil {
 		return err
 	}
