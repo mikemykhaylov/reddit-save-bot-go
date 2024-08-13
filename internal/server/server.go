@@ -23,6 +23,7 @@ func helloHandle(w http.ResponseWriter, r *http.Request) {
 
 func botHandle(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	log := logger.FromContext(ctx)
 
 	var update gotgbot.Update
 
@@ -31,20 +32,20 @@ func botHandle(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&update)
 
 	if err != nil {
-		logger.FromContext(ctx).Error("Failed to decode update", "cause", err)
+		log.Error("Failed to decode update", "cause", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// print the sender id
-	logger.FromContext(ctx).Info("Received message", "sender", update.Message.From.Id)
+	log.Info("Received message", "sender", update.Message.From.Id)
 
 	// send a message back
 	personalID := viper.GetInt64("personalID")
 
 	err = telegramAPI.SendMessage(ctx, personalID, "Hello, Go!")
 	if err != nil {
-		logger.FromContext(ctx).Error("Failed to send message", "cause", err)
+		log.Error("Failed to send message", "cause", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
