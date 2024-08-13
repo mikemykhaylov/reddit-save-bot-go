@@ -19,7 +19,7 @@ type TelegramAPI struct {
 func NewTelegramAPI(token string, httpClient HTTPClient) *TelegramAPI {
 	return &TelegramAPI{
 		baseURL:    "https://api.telegram.org/bot" + token,
-		httpClient: &http.Client{},
+		httpClient: httpClient,
 	}
 }
 
