@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -61,6 +62,23 @@ func (m *MessageHandler) HandleMessage(ctx context.Context, message *gotgbot.Mes
 	if !strings.Contains(postURL.Hostname(), "reddit.com") {
 		log.Warn("URL is not from Reddit, ignoring")
 		return nil
+	}
+
+	// try to get URL, if redirect, get the final URL
+	httpClient := &http.Client{}
+	httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
+	res, err := httpClient.Get(postURL.String())
+	if err != nil {
+		_ = m.TelegramAPI.SendMessage(ctx, message.Chat.Id, "Failed to get URL")
+		return nil
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode == http.StatusMovedPermanently || res.StatusCode == http.StatusFound {
+		postURL, _ = res.Location()
 	}
 
 	// get reddit api token to authorize download
