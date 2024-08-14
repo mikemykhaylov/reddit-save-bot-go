@@ -85,7 +85,14 @@ func init() {
 		return
 	}
 
-	resp, err := http.Get(gcpMetadataServerURL)
+	req, err := http.NewRequest("GET", gcpMetadataServerURL, nil)
+	if err != nil {
+		return
+	}
+
+	req.Header.Add("Metadata-Flavor", "Google")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		FromContext(context.Background()).Error("Failed to get GCP project ID", "cause", err)
 		return
