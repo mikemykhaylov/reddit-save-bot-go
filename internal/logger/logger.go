@@ -2,9 +2,13 @@ package logger
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type (
@@ -12,8 +16,11 @@ type (
 )
 
 var (
-	logKey         ContextKey = "logger"
-	gcpSlogMapping            = map[string]string{
+	logKey ContextKey = "logger"
+
+	gcpMetadataServerURL = "http://metadata.google.internal/computeMetadata/v1/project/project-id"
+	gcpProjectID         = ""
+	gcpSlogMapping       = map[string]string{
 		"level": "severity",
 		"msg":   "message",
 	}
@@ -44,7 +51,18 @@ func WithLogging(next http.HandlerFunc) http.HandlerFunc {
 		logger = logger.With("method", r.Method, "path", r.URL.Path)
 
 		if isGCP() {
-			logger = logger.With("logging.googleapis.com/trace", r.Header.Get("Traceparent"))
+			traceparent := r.Header.Get("Traceparent")
+			parsedTraceparent := strings.Split(traceparent, "-")
+			if len(parsedTraceparent) != 4 {
+				logger.Debug("No traceparent found")
+			} else {
+				traceID := parsedTraceparent[1]
+				// spanID is hex encoded, so we need to convert it to int
+				spanID, _ := strconv.ParseInt(parsedTraceparent[2], 16, 64)
+				logger = logger.With("logging.googleapis.com/trace", fmt.Sprintf("projects/%s/traces/%s", gcpProjectID, traceID))
+				logger = logger.With("logging.googleapis.com/spanId", spanID)
+			}
+			logger.Debug("Running in GCP")
 		}
 
 		ctx := context.WithValue(r.Context(), logKey, logger)
@@ -60,4 +78,25 @@ func FromContext(ctx context.Context) *slog.Logger {
 	}
 
 	return NewLogger()
+}
+
+func init() {
+	if !isGCP() {
+		return
+	}
+
+	resp, err := http.Get(gcpMetadataServerURL)
+	if err != nil {
+		FromContext(context.Background()).Error("Failed to get GCP project ID", "cause", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	projectID, err := io.ReadAll(resp.Body)
+	if err != nil {
+		FromContext(context.Background()).Error("Failed to read GCP project ID", "cause", err)
+		return
+	}
+
+	gcpProjectID = string(projectID)
 }
