@@ -21,11 +21,19 @@ RUN go build -o myapp
 # Step 2: Create a smaller image and copy the binary
 FROM alpine:3.20
 
+# Install yt-dlp and ffmpeg
+
+RUN apk add --no-cache yt-dlp ffmpeg
+RUN addgroup -S myuser && adduser -S myuser -G myuser
+
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
 # Copy the binary from the builder stage
 COPY --from=builder /app/myapp .
+
+# Use an unprivileged user
+USER myuser
 
 # Command to run the executable
 ENTRYPOINT ["./myapp", "serve"]
