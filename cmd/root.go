@@ -56,18 +56,18 @@ func init() {
 	viper.SetDefault("port", 8080)
 
 	serveCmd.Flags().StringP("token", "t", "", "Telegram bot token")
-	if err := viper.BindPFlag("token", serveCmd.Flags().Lookup("token")); err != nil {
+	if err := viper.BindPFlag(config.TelegramBotTokenKey, serveCmd.Flags().Lookup("token")); err != nil {
 		panic(err)
 	}
-	if err := viper.BindEnv("token", "TELEGRAM_BOT_TOKEN"); err != nil {
+	if err := viper.BindEnv(config.TelegramBotTokenKey, "TELEGRAM_BOT_TOKEN"); err != nil {
 		panic(err)
 	}
 
 	serveCmd.Flags().StringP("personalID", "", "", "Telegram personal ID")
-	if err := viper.BindPFlag("personalID", serveCmd.Flags().Lookup("personalID")); err != nil {
+	if err := viper.BindPFlag(config.PersonalIDKey, serveCmd.Flags().Lookup("personalID")); err != nil {
 		panic(err)
 	}
-	if err := viper.BindEnv("personalID", "PERSONAL_ID"); err != nil {
+	if err := viper.BindEnv(config.PersonalIDKey, "PERSONAL_ID"); err != nil {
 		panic(err)
 	}
 
