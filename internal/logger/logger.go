@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -57,8 +56,7 @@ func WithLogging(next http.HandlerFunc) http.HandlerFunc {
 				logger.Debug("No traceparent found")
 			} else {
 				traceID := parsedTraceparent[1]
-				// spanID is hex encoded, so we need to convert it to int
-				spanID, _ := strconv.ParseInt(parsedTraceparent[2], 16, 64)
+				spanID := parsedTraceparent[2]
 				logger = logger.With("logging.googleapis.com/trace", fmt.Sprintf("projects/%s/traces/%s", gcpProjectID, traceID))
 				logger = logger.With("logging.googleapis.com/spanId", spanID)
 			}
