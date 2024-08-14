@@ -4,6 +4,7 @@ go 1.22
 
 require (
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.28
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
