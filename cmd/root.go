@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/mikemykhaylov/reddit-save-bot-go/internal/api"
 	"github.com/mikemykhaylov/reddit-save-bot-go/internal/config"
 	"github.com/mikemykhaylov/reddit-save-bot-go/internal/logger"
 	"github.com/mikemykhaylov/reddit-save-bot-go/internal/server"
@@ -31,8 +32,8 @@ var (
 				return errors.New("telegram bot token is required")
 			}
 
-			personalID := viper.GetString("personalID")
-			if personalID == "" {
+			personalID := viper.GetInt64("personalID")
+			if personalID == api.TelegramPublicPersonalID {
 				logger.FromContext(context.Background()).Warn("Telegram personal ID is not set, bot in public mode")
 			}
 
@@ -68,6 +69,23 @@ func init() {
 		panic(err)
 	}
 	if err := viper.BindEnv(config.PersonalIDKey, "PERSONAL_ID"); err != nil {
+		panic(err)
+	}
+	viper.SetDefault(config.PersonalIDKey, api.TelegramPublicPersonalID)
+
+	serveCmd.Flags().StringP("redditClientID", "", "", "Reddit client ID")
+	if err := viper.BindPFlag(config.RedditClientIDKey, serveCmd.Flags().Lookup("redditClientID")); err != nil {
+		panic(err)
+	}
+	if err := viper.BindEnv(config.RedditClientIDKey, "REDDIT_CLIENT_ID"); err != nil {
+		panic(err)
+	}
+
+	serveCmd.Flags().StringP("redditClientSecret", "", "", "Reddit client secret")
+	if err := viper.BindPFlag(config.RedditClientSecretKey, serveCmd.Flags().Lookup("redditClientSecret")); err != nil {
+		panic(err)
+	}
+	if err := viper.BindEnv(config.RedditClientSecretKey, "REDDIT_CLIENT_SECRET"); err != nil {
 		panic(err)
 	}
 
