@@ -75,7 +75,6 @@ func (m *MessageHandler) HandleMessage(ctx context.Context, message *gotgbot.Mes
 	videoName := uuid.New().String()
 	videoPath := fmt.Sprintf("/tmp/%s.mp4", videoName)
 
-	var outB, errB strings.Builder
 	args := []string{
 		"yt-dlp",
 		"--add-header",
@@ -92,14 +91,13 @@ func (m *MessageHandler) HandleMessage(ctx context.Context, message *gotgbot.Mes
 
 	// run yt-dlp to download the video
 	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Stdout = &outB
-	cmd.Stderr = &errB
-	if err = cmd.Run(); err != nil {
-		log.Error("Failed to download video", "cause", err, "stderr", errB.String())
+	outB, err := cmd.Output()
+	if err != nil {
+		log.Error("Failed to download video", "cause", err)
 		_ = m.TelegramAPI.SendMessage(ctx, message.Chat.Id, "Failed to download video")
 		return nil
 	} else {
-		log.Debug("yt-dlp output", "stdout", outB.String())
+		log.Debug("yt-dlp output", "stdout", string(outB))
 	}
 
 	// get video file
