@@ -65,21 +65,20 @@ func (m *MessageHandler) HandleMessage(ctx context.Context, message *gotgbot.Mes
 	}
 
 	// try to get URL, if redirect, get the final URL
-	res, err := http.Get(postURL.String())
+	httpClient := &http.Client{}
+	httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
+	res, err := httpClient.Get(postURL.String())
 	if err != nil {
 		_ = m.TelegramAPI.SendMessage(ctx, message.Chat.Id, "Failed to get URL")
 		return nil
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != http.StatusOK {
-		if res.StatusCode == http.StatusMovedPermanently || res.StatusCode == http.StatusFound {
-			postURL, err = res.Location()
-			if err != nil {
-				_ = m.TelegramAPI.SendMessage(ctx, message.Chat.Id, "Failed to get final URL")
-				return nil
-			}
-		}
+	if res.StatusCode == http.StatusMovedPermanently || res.StatusCode == http.StatusFound {
+		postURL, _ = res.Location()
 	}
 
 	// get reddit api token to authorize download
