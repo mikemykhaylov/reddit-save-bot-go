@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
+
+	"github.com/mikemykhaylov/reddit-save-bot-go/internal/logger"
 )
 
 var (
@@ -17,9 +20,13 @@ var (
 type RedditAPI struct {
 	clientID     string
 	clientSecret string
-	userAgent    string
-	baseURL      string
-	httpClient   *http.Client
+
+	userAgent  string
+	baseURL    string
+	httpClient *http.Client
+
+	token          string
+	tokenExpiresAt time.Time
 }
 
 type TokenGrant struct {
@@ -40,6 +47,8 @@ func NewRedditAPI(clientID, clientSecret string, httpClient *http.Client) *Reddi
 }
 
 func (r *RedditAPI) GetToken(ctx context.Context) (string, error) {
+	log := logger.FromContext(ctx)
+
 	errors := []string{}
 
 	if r.clientID == "" {
@@ -51,6 +60,15 @@ func (r *RedditAPI) GetToken(ctx context.Context) (string, error) {
 	if len(errors) > 0 {
 		err := fmt.Errorf("missing required fields: %s", strings.Join(errors, ", "))
 		return "", err
+	}
+
+	if r.token != "" {
+		if time.Now().Before(r.tokenExpiresAt) {
+			return r.token, nil
+		}
+		log.Info("Refreshing Reddit access token")
+	} else {
+		log.Info("Fetching Reddit access token")
 	}
 
 	requestURL, _ := url.Parse(fmt.Sprintf("%s/access_token", r.baseURL))
@@ -84,6 +102,9 @@ func (r *RedditAPI) GetToken(ctx context.Context) (string, error) {
 	if err := json.NewDecoder(res.Body).Decode(&tokenGrant); err != nil {
 		return "", err
 	}
+
+	r.token = tokenGrant.AccessToken
+	r.tokenExpiresAt = time.Now().Add(time.Duration(tokenGrant.ExpiresIn) * time.Second)
 
 	return tokenGrant.AccessToken, nil
 }
