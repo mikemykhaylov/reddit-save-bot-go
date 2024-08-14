@@ -52,15 +52,13 @@ func WithLogging(next http.HandlerFunc) http.HandlerFunc {
 		if isGCP() {
 			traceparent := r.Header.Get("Traceparent")
 			parsedTraceparent := strings.Split(traceparent, "-")
-			if len(parsedTraceparent) != 4 {
-				logger.Debug("No traceparent found")
-			} else {
-				traceID := parsedTraceparent[1]
-				spanID := parsedTraceparent[2]
-				logger = logger.With("logging.googleapis.com/trace", fmt.Sprintf("projects/%s/traces/%s", gcpProjectID, traceID))
-				logger = logger.With("logging.googleapis.com/spanId", spanID)
-			}
-			logger.Debug("Running in GCP")
+
+			traceID := parsedTraceparent[1]
+			traceResource := fmt.Sprintf("projects/%s/traces/%s", gcpProjectID, traceID)
+			spanID := parsedTraceparent[2]
+
+			logger = logger.With("logging.googleapis.com/trace", traceResource)
+			logger = logger.With("logging.googleapis.com/spanId", spanID)
 		}
 
 		ctx := context.WithValue(r.Context(), logKey, logger)
