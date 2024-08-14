@@ -60,7 +60,7 @@ func NewServer(serverConfig *config.ServerConfig) error {
 	httpClient := &http.Client{}
 
 	telegramAPI := api.NewTelegramAPI(viper.GetString(config.TelegramBotTokenKey), httpClient)
-	redditAPI := api.NewRedditAPI(viper.GetString(config.RedditClientIDKey), viper.GetString(config.RedditClientSecret), httpClient)
+	redditAPI := api.NewRedditAPI(viper.GetString(config.RedditClientIDKey), viper.GetString(config.RedditClientSecretKey), httpClient)
 
 	messageHandler = handler.NewMessageHandler(telegramAPI, redditAPI)
 

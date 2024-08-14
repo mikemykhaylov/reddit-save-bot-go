@@ -82,10 +82,10 @@ func init() {
 	}
 
 	serveCmd.Flags().StringP("redditClientSecret", "", "", "Reddit client secret")
-	if err := viper.BindPFlag(config.RedditClientSecret, serveCmd.Flags().Lookup("redditClientSecret")); err != nil {
+	if err := viper.BindPFlag(config.RedditClientSecretKey, serveCmd.Flags().Lookup("redditClientSecret")); err != nil {
 		panic(err)
 	}
-	if err := viper.BindEnv(config.RedditClientSecret, "REDDIT_CLIENT_SECRET"); err != nil {
+	if err := viper.BindEnv(config.RedditClientSecretKey, "REDDIT_CLIENT_SECRET"); err != nil {
 		panic(err)
 	}
 
