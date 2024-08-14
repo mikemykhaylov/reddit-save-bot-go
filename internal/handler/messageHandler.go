@@ -95,7 +95,8 @@ func (m *MessageHandler) HandleMessage(ctx context.Context, message *gotgbot.Mes
 	log.Info("yt-dlp output", "stdout", string(outB))
 
 	if err != nil {
-		log.Error("Failed to download video", "cause", err)
+		err := err.(*exec.ExitError)
+		log.Error("Failed to download video", "cause", err, "stderr", string(err.Stderr))
 		_ = m.TelegramAPI.SendMessage(ctx, message.Chat.Id, "Failed to download video")
 		return nil
 	}
