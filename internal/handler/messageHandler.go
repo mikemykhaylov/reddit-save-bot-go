@@ -36,7 +36,7 @@ func NewMessageHandler(telegramAPI *api.TelegramAPI, redditAPI *api.RedditAPI) *
 
 func (m *MessageHandler) HandleMessage(ctx context.Context, message *gotgbot.Message) error {
 	log := logger.FromContext(ctx)
-	log.Info("Handling message", "message", message.Text)
+	log.Info("Handling message", "messageText", message.Text)
 	defer log.Info("Finished handling message")
 
 	personalID := viper.GetInt64(config.PersonalIDKey)
