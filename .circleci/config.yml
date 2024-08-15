@@ -87,10 +87,11 @@ jobs:
       - run:
           name: "Build Docker runtime image"
           command: |
+            mkdir -p images
             docker buildx build \
               -t ${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1} \
               --sbom=true --target builder \
-              -o type=tar,dest=images/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1} .
+              -o type=tar,dest=images/${CIRCLE_PROJECT_REPONAME}_${CIRCLE_SHA1} .
       - persist_to_workspace:
           root: .
           paths:
