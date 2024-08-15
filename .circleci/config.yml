@@ -42,6 +42,18 @@ commands:
         default: ${CIRCLE_PROJECT_REPONAME}
     steps:
       - run:
+          name: Check if Cloud Run service exists
+          command: |
+            gcloud run services describe \
+              <<parameters.cloud-run-instance>> \
+              --region="${GCP_AR_REGION}" > /dev/null
+            if [ $? -eq 0 ]; then
+              echo "Cloud Run service <<parameters.cloud-run-instance>> exists"
+            else
+              echo "Cloud Run service <<parameters.cloud-run-instance>> does not exist"
+              circleci-agent step halt
+            fi
+      - run:
           name: Update the Cloud Run with new image
           command: |
             gcloud run services update \
