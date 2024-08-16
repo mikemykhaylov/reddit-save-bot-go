@@ -66,11 +66,15 @@ commands:
 jobs:
   build:
     docker:
-      - image: cimg/base:current
+      - image: cimg/gcp:2024.03
     steps:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true # DLC will explicitly cache layers here and try to avoid rebuilding.
+      - authenticate-gcp
+      - run:
+          name: Set up Docker auth
+          command: gcloud auth configure-docker "${GCP_AR_REGION}-docker.pkg.dev"
       - run:
           name: "Create Docker Buildx builder"
           command: |
@@ -85,39 +89,12 @@ jobs:
               -t ${CIRCLE_PROJECT_REPONAME}:builder \
               --load --target builder .
       - run:
-          name: "Build Docker runtime image"
+          name: "Build and push Docker runtime image"
           command: |
             mkdir -p images
             docker buildx build \
-              -t ${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1} \
-              --target builder \
-              -o type=tar,dest=images/${CIRCLE_PROJECT_REPONAME}_${CIRCLE_SHA1} .
-      - persist_to_workspace:
-          root: .
-          paths:
-            - images
-  push:
-    docker:
-      - image: cimg/gcp:2024.03
-    steps:
-      - authenticate-gcp
-      - run:
-          name: Set up Docker auth
-          command: gcloud auth configure-docker "${GCP_AR_REGION}-docker.pkg.dev"
-      - attach_workspace:
-          at: .
-      - setup_remote_docker:
-          version: default
-      - run:
-          name: Load image
-          command: |
-            docker image load < "images/${CIRCLE_PROJECT_REPONAME}_${CIRCLE_SHA1}"
-      - run:
-          name: Tag image for Artifact Registry
-          command: docker tag "${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" "${GCP_AR_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_AR_REPO}/${CIRCLE_PROJECT_REPONAME}"
-      - run:
-          name: Push image for Artifact Registry
-          command: docker push "${GCP_AR_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_AR_REPO}/${CIRCLE_PROJECT_REPONAME}"
+              -t "${GCP_AR_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_AR_REPO}/${CIRCLE_PROJECT_REPONAME}" \
+              --sbom=true .
   deploy-prod:
     docker:
       - image: cimg/gcp:2024.03
@@ -138,18 +115,15 @@ workflows:
   build-deploy:
     jobs:
       - build
-      - push:
-          requires:
-            - build
       - deploy-prod:
           requires:
-            - push
+            - build
           filters:
             branches:
               only: /main/
       - deploy-staging:
           requires:
-            - push
+            - build
           filters:
             branches:
               ignore: /main/
