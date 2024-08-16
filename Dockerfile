@@ -4,19 +4,18 @@ FROM golang:1.22-alpine AS builder
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
-# Cache dependencies by copying go.mod and go.sum
-COPY go.mod go.sum ./
+# Cache dependencies
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+  --mount=type=bind,source=go.sum,target=go.sum \
+  --mount=type=bind,source=go.mod,target=go.mod \
+  go mod download -x
 
-# Download all dependencies. Dependencies will be cached if go.mod and go.sum aren't changed
-RUN go mod download
-
-# Copy the source code into the container
-COPY cmd cmd
-COPY internal internal
-COPY *.go ./
 
 # Build the Go app
-RUN go build -o myapp
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+  --mount=type=cache,target=/root/.cache/go-build \
+  --mount=type=bind,target=. \
+  go build -o /build/myapp
 
 # Step 2: Create a smaller image and copy the binary
 FROM alpine:3.20
@@ -30,7 +29,7 @@ RUN addgroup -S myuser && adduser -S myuser -G myuser
 WORKDIR /app
 
 # Copy the binary from the builder stage
-COPY --from=builder /app/myapp .
+COPY --from=builder /build/myapp .
 
 # Use an unprivileged user
 USER myuser

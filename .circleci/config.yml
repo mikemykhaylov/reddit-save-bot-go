@@ -3,6 +3,12 @@
 ---
 version: 2.1
 
+executors:
+  gcp:
+    docker:
+      - image: cimg/gcp:2024.03
+    resource_class: medium
+
 commands:
   authenticate-gcp:
     steps:
@@ -65,55 +71,41 @@ commands:
 # See: https://circleci.com/docs/configuration-reference/#jobs
 jobs:
   build:
-    docker:
-      - image: cimg/base:current
+    executor: gcp
     steps:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true # DLC will explicitly cache layers here and try to avoid rebuilding.
-      - run:
-          name: "Build Docker image"
-          command: "docker build . --tag ${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}"
-      - run:
-          name: Save image as tar
-          command: |
-            mkdir -p images
-            docker image save -o "images/${CIRCLE_PROJECT_REPONAME}_${CIRCLE_SHA1}" "${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}"
-      - persist_to_workspace:
-          root: .
-          paths:
-            - images
-  push:
-    docker:
-      - image: cimg/gcp:2024.03
-    steps:
       - authenticate-gcp
       - run:
           name: Set up Docker auth
           command: gcloud auth configure-docker "${GCP_AR_REGION}-docker.pkg.dev"
-      - attach_workspace:
-          at: .
-      - setup_remote_docker:
-          version: default
       - run:
-          name: Load image
+          name: "Create Docker Buildx builder"
           command: |
-            docker image load < "images/${CIRCLE_PROJECT_REPONAME}_${CIRCLE_SHA1}"
+            docker buildx create \
+              --name container \
+              --driver=docker-container \
+              --use --bootstrap
       - run:
-          name: Tag image for Artifact Registry
-          command: docker tag "${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" "${GCP_AR_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_AR_REPO}/${CIRCLE_PROJECT_REPONAME}"
+          name: "Build Docker builder image"
+          command: |
+            docker buildx build \
+              -t ${CIRCLE_PROJECT_REPONAME}:builder \
+              --load --target builder .
       - run:
-          name: Push image for Artifact Registry
-          command: docker push "${GCP_AR_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_AR_REPO}/${CIRCLE_PROJECT_REPONAME}"
+          name: "Build and push Docker runtime image"
+          command: |
+            docker buildx build \
+              -t "${GCP_AR_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_AR_REPO}/${CIRCLE_PROJECT_REPONAME}" \
+              --push  .
   deploy-prod:
-    docker:
-      - image: cimg/gcp:2024.03
+    executor: gcp
     steps:
       - authenticate-gcp
       - deploy-service
   deploy-staging:
-    docker:
-      - image: cimg/gcp:2024.03
+    executor: gcp
     steps:
       - authenticate-gcp
       - deploy-service:
@@ -125,18 +117,15 @@ workflows:
   build-deploy:
     jobs:
       - build
-      - push:
-          requires:
-            - build
       - deploy-prod:
           requires:
-            - push
+            - build
           filters:
             branches:
               only: /main/
       - deploy-staging:
           requires:
-            - push
+            - build
           filters:
             branches:
               ignore: /main/
