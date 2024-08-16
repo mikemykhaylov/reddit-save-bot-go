@@ -3,6 +3,12 @@
 ---
 version: 2.1
 
+executors:
+  gcp:
+    docker:
+      - image: cimg/gcp:2024.03
+    resource_class: medium
+
 commands:
   authenticate-gcp:
     steps:
@@ -65,8 +71,7 @@ commands:
 # See: https://circleci.com/docs/configuration-reference/#jobs
 jobs:
   build:
-    docker:
-      - image: cimg/gcp:2024.03
+    executor: gcp
     steps:
       - checkout
       - setup_remote_docker:
@@ -96,14 +101,12 @@ jobs:
               -t "${GCP_AR_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_AR_REPO}/${CIRCLE_PROJECT_REPONAME}" \
               --sbom=true --push .
   deploy-prod:
-    docker:
-      - image: cimg/gcp:2024.03
+    executor: gcp
     steps:
       - authenticate-gcp
       - deploy-service
   deploy-staging:
-    docker:
-      - image: cimg/gcp:2024.03
+    executor: gcp
     steps:
       - authenticate-gcp
       - deploy-service:
