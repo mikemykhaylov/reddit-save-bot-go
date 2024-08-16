@@ -52,8 +52,8 @@ func (m *MessageHandler) HandleMessage(ctx context.Context, message *gotgbot.Mes
 		return m.TelegramAPI.SendMessage(ctx, message.Chat.Id, StartCommandResponse)
 	}
 
-	postURL, err := url.Parse(message.Text)
-	if err != nil {
+	postURL, err := url.ParseRequestURI(message.Text)
+	if err != nil || postURL.Scheme == "" || postURL.Host == "" {
 		_ = m.TelegramAPI.SendMessage(ctx, message.Chat.Id, "Failed to parse URL")
 		err = fmt.Errorf("failed to parse URL\n  caused by: %w", err)
 		return err
