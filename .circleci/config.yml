@@ -94,7 +94,7 @@ jobs:
             mkdir -p images
             docker buildx build \
               -t "${GCP_AR_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_AR_REPO}/${CIRCLE_PROJECT_REPONAME}" \
-              --sbom=true .
+              --sbom=true --push .
   deploy-prod:
     docker:
       - image: cimg/gcp:2024.03
