@@ -42,7 +42,7 @@ func (m *MessageHandler) HandleMessage(ctx context.Context, message *gotgbot.Mes
 
 	personalID := viper.GetInt64(config.PersonalIDKey)
 	if personalID != api.TelegramPublicPersonalID && message.From.Id != personalID {
-		log = log.With("personalID", message.From.Id, "message", message.Text)
+		log = log.With("personalID", message.From.Id, "messageText", message.Text, "username", message.From.Username)
 		log.Warn("Message is not from personal ID, ignoring")
 		return nil
 	}
