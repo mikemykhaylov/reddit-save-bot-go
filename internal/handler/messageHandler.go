@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -113,8 +114,11 @@ func (m *MessageHandler) HandleMessage(ctx context.Context, message *gotgbot.Mes
 	log.Info("yt-dlp output", "stdout", string(outB))
 
 	if err != nil {
-		err := err.(*exec.ExitError)
-		log.Error("Failed to download video", "cause", err, "stderr", string(err.Stderr))
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			log = log.With("stderr", string(exitErr.Stderr))
+		}
+		log.Error("Failed to download video", "cause", err)
 		_ = m.TelegramAPI.SendMessage(ctx, message.Chat.Id, "Failed to download video")
 		return nil
 	}
